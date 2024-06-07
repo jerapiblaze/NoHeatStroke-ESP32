@@ -8,6 +8,7 @@ References:
 - [Connect 1602 led using I2C module to esp32 -- randomnerdtutorials.com](https://randomnerdtutorials.com/esp32-esp8266-i2c-lcd-arduino-ide/)
 - [ESP32 with DHT11/DHT22 -- randomnerdtutorials.com](https://randomnerdtutorials.com/esp32-dht11-dht22-temperature-humidity-sensor-arduino-ide/)
 - [ESP32 sleep modes -- deepbluembedded.com](https://deepbluembedded.com/esp32-sleep-modes-power-consumption/)
+- [ESP32 external interrupts pins -- deepbluembedded.com](https://deepbluembedded.com/esp32-external-interrupts-pins-arduino-examples/)
 - [UTF-8 character with 1602 LCD -- LiquidCrystal_I2C_UTF8 (locple)](https://github.com/locple/LiquidCrystal_I2C_UTF8)
 */
 #include <WiFi.h>
