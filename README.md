@@ -30,3 +30,4 @@ Before uploading the code to your own ESP32, you will need to define some variab
 - [ESP32 sleep modes -- deepbluembedded.com](https://deepbluembedded.com/esp32-sleep-modes-power-consumption/)
 - [ESP32 external interrupts pins -- deepbluembedded.com](https://deepbluembedded.com/esp32-external-interrupts-pins-arduino-examples/)
 - [UTF-8 character with 1602 LCD -- LiquidCrystal_I2C_UTF8 (locple)](https://github.com/locple/LiquidCrystal_I2C_UTF8)
+- [HeatIndex Calculator -- calculator.net](https://www.calculator.net/heat-index-calculator.html)

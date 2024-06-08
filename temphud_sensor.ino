@@ -10,6 +10,7 @@ References:
 - [ESP32 sleep modes -- deepbluembedded.com](https://deepbluembedded.com/esp32-sleep-modes-power-consumption/)
 - [ESP32 external interrupts pins -- deepbluembedded.com](https://deepbluembedded.com/esp32-external-interrupts-pins-arduino-examples/)
 - [UTF-8 character with 1602 LCD -- LiquidCrystal_I2C_UTF8 (locple)](https://github.com/locple/LiquidCrystal_I2C_UTF8)
+- [HeatIndex Calculator -- calculator.net](https://www.calculator.net/heat-index-calculator.html)
 */
 #include <WiFi.h>
 #include "DHT.h"
@@ -90,7 +91,7 @@ void DisplayValues(){
   lcd.println();
   lcd.printf("%6.2fH ", _hind);
   // Heat index levels
-  if (_hind < 80){
+  if (_hind < 27){ // SAFE
     digitalWrite(PEEXT, LOW);
     digitalWrite(PEXTR, LOW);
     digitalWrite(PDANG, LOW);
@@ -99,32 +100,32 @@ void DisplayValues(){
     Serial.printf("NORMAL");
     lcd.println("  NORMAL");
   }
-  if (_hind >= 80){
+  if (_hind >= 27){ // CAUTION
     digitalWrite(PEEXT, LOW);
     digitalWrite(PEXTR, LOW);
     digitalWrite(PDANG, LOW);
     digitalWrite(PWARN, HIGH);
     digitalWrite(PSAFE, LOW);
-    Serial.println("WARNING");
-    lcd.printf(" WARNING");
+    Serial.println("CAUTION");
+    lcd.printf(" CAUTION");
   }
-  if (_hind >= 90){
+  if (_hind >= 32){
     digitalWrite(PEEXT, LOW);
     digitalWrite(PEXTR, LOW);
     digitalWrite(PDANG, HIGH);
+    Serial.println("EXTRA_CAUTION");
+    lcd.printf("XCAUTION");
+  }
+  if (_hind >= 41){
+    digitalWrite(PEEXT, LOW);
+    digitalWrite(PEXTR, HIGH);
     Serial.println("DANGER");
     lcd.printf("  DANGER");
   }
-  if (_hind >= 105){
-    digitalWrite(PEEXT, LOW);
-    digitalWrite(PEXTR, HIGH);
+  if (_hind >= 54){
+    digitalWrite(PEEXT, HIGH);
     Serial.println("EXTREME_DANGER");
     lcd.printf(" XDANGER");
-  }
-  if (_hind >= 130){
-    digitalWrite(PEEXT, HIGH);
-    Serial.println("EXTRA_EXTREME_DANGER");
-    lcd.printf("XXDANGER");
   }
   Serial.println();
   return;
