@@ -11,6 +11,7 @@ References:
 - [ESP32 external interrupts pins -- deepbluembedded.com](https://deepbluembedded.com/esp32-external-interrupts-pins-arduino-examples/)
 - [UTF-8 character with 1602 LCD -- LiquidCrystal_I2C_UTF8 (locple)](https://github.com/locple/LiquidCrystal_I2C_UTF8)
 - [HeatIndex Calculator -- calculator.net](https://www.calculator.net/heat-index-calculator.html)
+- [The HeatIndex Equation -- ncep.noaa.gov](http://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml)
 */
 #include <WiFi.h>
 #include "DHT.h"
