@@ -52,15 +52,19 @@ HTTPClient http;
 WiFiClient client;
 
 RTC_DATA_ATTR volatile int _n_samples = 5;
-RTC_DATA_ATTR volatile float _humi = 0;
-RTC_DATA_ATTR volatile float _temp = 0;
-RTC_DATA_ATTR volatile float _hind = 0;
+volatile float _humi = 0;
+volatile float _temp = 0;
+volatile float _hind = 0;
+volatile bool is_broken = false;
+volatile int current_warn_level = -1;
+volatile int next_warn_level = -1;
 volatile bool will_sleep = false;
 
 void ReadSensor(){
   // Read _n_samples times to get maximum _n_samples
   // If any sample is corrupted, ignore it. 
   int i = 0;
+  int f = 0;
   while(i < _n_samples){
     delay(2000);
     i++;
@@ -68,8 +72,10 @@ void ReadSensor(){
     float t = dht.readTemperature();
     if (isnan(h) || isnan(t)){
       Serial.println("[SENS] FAIL TO READ DATA!");
+      f++;
       continue;
     }
+    is_broken = false;
     if (_humi == 0 || _temp == 0){
       _humi = h;
       _temp = t;
@@ -79,53 +85,96 @@ void ReadSensor(){
     }
     _hind = dht.computeHeatIndex(_temp, _humi, false);
   }
+  if (f == i){
+    is_broken = true;
+  }
   return;
 }
 
 void DisplayValues(){
-  Serial.printf("[SENS] TEMP=%5.2f HUMID=%5.2f HEAT=%5.2f COND=", _temp, _humi, _hind);
   lcd.setCursor(0,0); // faster than clear because we use all of the cells anyway
+  if (is_broken){
+    Serial.println("[SENS] SENSOR ERROR");
+    lcd.println("! SENSOR ERROR !");
+    lcd.println("! ------------ !");
+    current_warn_level = -1;
+    digitalWrite(PEEXT, HIGH);
+    digitalWrite(PEXTR, LOW);
+    digitalWrite(PDANG, HIGH);
+    digitalWrite(PWARN, LOW);
+    digitalWrite(PSAFE, HIGH);
+    return;
+  }
+  Serial.printf("[SENS] TEMP=%5.2f HUMID=%5.2f HEAT=%5.2f COND=", _temp, _humi, _hind);
   lcd.printf("%6.2f", _temp);
   lcd.print("°C ");
   lcd.printf("%6.2f", _humi);
   lcd.print("%");
   lcd.println();
   lcd.printf("%6.2fH ", _hind);
+  if (_hind < 27){
+    next_warn_level = 0;
+    Serial.printf("NORMAL");
+  }
+  if (_hind >= 27){
+    next_warn_level = 1;
+    Serial.println("CAUTION");
+  }
+  if (_hind >= 32){
+    next_warn_level = 2;
+    Serial.println("EXTRA_CAUTION");
+  }
+  if (_hind >=41){
+    next_warn_level = 3;
+    Serial.println("DANGER");
+  }
+  if (_hind >= 54){
+    next_warn_level = 4;
+    Serial.println("EXTREME_DANGER");
+  }
+  if (next_warn_level == current_warn_level){
+    return;
+  }
+  current_warn_level = next_warn_level;
   // Heat index levels
-  if (_hind < 27){ // SAFE
+  if (current_warn_level == 0){ // SAFE
     digitalWrite(PEEXT, LOW);
     digitalWrite(PEXTR, LOW);
     digitalWrite(PDANG, LOW);
     digitalWrite(PWARN, LOW);
     digitalWrite(PSAFE, HIGH);
-    Serial.printf("NORMAL");
     lcd.println("  NORMAL");
   }
-  if (_hind >= 27){ // CAUTION
+  if (current_warn_level == 1){ // CAUTION
     digitalWrite(PEEXT, LOW);
     digitalWrite(PEXTR, LOW);
     digitalWrite(PDANG, LOW);
     digitalWrite(PWARN, HIGH);
     digitalWrite(PSAFE, LOW);
-    Serial.println("CAUTION");
     lcd.printf(" CAUTION");
   }
-  if (_hind >= 32){
+  if (current_warn_level == 2){
     digitalWrite(PEEXT, LOW);
     digitalWrite(PEXTR, LOW);
     digitalWrite(PDANG, HIGH);
-    Serial.println("EXTRA_CAUTION");
+    digitalWrite(PWARN, HIGH);
+    digitalWrite(PSAFE, LOW);
     lcd.printf("XCAUTION");
   }
-  if (_hind >= 41){
+  if (current_warn_level == 3){
     digitalWrite(PEEXT, LOW);
     digitalWrite(PEXTR, HIGH);
-    Serial.println("DANGER");
+    digitalWrite(PDANG, HIGH);
+    digitalWrite(PWARN, HIGH);
+    digitalWrite(PSAFE, LOW);
     lcd.printf("  DANGER");
   }
-  if (_hind >= 54){
+  if (current_warn_level == 4){
     digitalWrite(PEEXT, HIGH);
-    Serial.println("EXTREME_DANGER");
+    digitalWrite(PEXTR, HIGH);
+    digitalWrite(PDANG, HIGH);
+    digitalWrite(PWARN, HIGH);
+    digitalWrite(PSAFE, LOW);
     lcd.printf(" XDANGER");
   }
   Serial.println();
@@ -138,7 +187,11 @@ void SendToServer(){
   }
   // Preparing the request body
   char payload[64];
-  snprintf(payload, 64, "{\"did\":\"%16s\",\"t\":%6.2f,\"h\":%6.2f,\"hi\":%6.2f}", DEVIVE_ID, _temp, _humi, _hind);
+  if (is_broken){
+    snprintf(payload, 128, "{\"did\":\"%16s\"}", DEVIVE_ID);
+  } else{
+    snprintf(payload, 128, "{\"did\":\"%16s\",\"t\":%6.2f,\"h\":%6.2f,\"hi\":%6.2f}", DEVIVE_ID, _temp, _humi, _hind);
+  }
   // Send the request
   int responseCode = http.POST(payload);
   Serial.print("[HTTP] ");
@@ -210,7 +263,7 @@ void loop() {
     // Leave user a message
     lcd.noBacklight();
     lcd.clear();
-    lcd.println("!  DEEP SLEEP  !");
+    lcd.println("!  ALARM  OFF  !");
     lcd.println("!  Press2wake  !");
     // Deep sleep
     Serial.println("[POWR] Entering deep sleep");
