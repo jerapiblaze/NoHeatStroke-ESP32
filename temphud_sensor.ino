@@ -63,6 +63,7 @@ volatile bool will_sleep = false;
 void ReadSensor(){
   // Read _n_samples times to get maximum _n_samples
   // If any sample is corrupted, ignore it. 
+  // If all _n_samples attempts are failed, mark sensor as error
   int i = 0;
   int f = 0;
   while(i < _n_samples){
@@ -93,7 +94,7 @@ void ReadSensor(){
 
 void DisplayValues(){
   lcd.setCursor(0,0); // faster than clear because we use all of the cells anyway
-  if (is_broken){
+  if (is_broken){     // sensor error, display error message
     Serial.println("[SENS] SENSOR ERROR");
     lcd.println("! SENSOR ERROR !");
     lcd.println("! ------------ !");
@@ -112,6 +113,7 @@ void DisplayValues(){
   lcd.print("%");
   lcd.println();
   lcd.printf("%6.2fH ", _hind);
+  // Heat index levels
   if (_hind < 27){
     next_warn_level = 0;
     Serial.printf("NORMAL");
@@ -132,12 +134,14 @@ void DisplayValues(){
     next_warn_level = 4;
     Serial.println("EXTREME_DANGER");
   }
+  // If new warning level is same as previous one
+  // no need to update the warnings, stablize outputs
   if (next_warn_level == current_warn_level){
     return;
   }
+  // Update new warning levels
   current_warn_level = next_warn_level;
-  // Heat index levels
-  if (current_warn_level == 0){ // SAFE
+  if (current_warn_level == 0){
     digitalWrite(PEEXT, LOW);
     digitalWrite(PEXTR, LOW);
     digitalWrite(PDANG, LOW);
@@ -145,7 +149,7 @@ void DisplayValues(){
     digitalWrite(PSAFE, HIGH);
     lcd.println("  NORMAL");
   }
-  if (current_warn_level == 1){ // CAUTION
+  if (current_warn_level == 1){
     digitalWrite(PEEXT, LOW);
     digitalWrite(PEXTR, LOW);
     digitalWrite(PDANG, LOW);
@@ -187,10 +191,10 @@ void SendToServer(){
   }
   // Preparing the request body
   char payload[64];
-  if (is_broken){
-    snprintf(payload, 128, "{\"did\":\"%16s\"}", DEVIVE_ID);
+  if (is_broken){ // If sensor error, send nothing but device id, save bandwidth
+    snprintf(payload, 32, "{\"did\":\"%16s\"}", DEVIVE_ID);
   } else{
-    snprintf(payload, 128, "{\"did\":\"%16s\",\"t\":%6.2f,\"h\":%6.2f,\"hi\":%6.2f}", DEVIVE_ID, _temp, _humi, _hind);
+    snprintf(payload, 64, "{\"did\":\"%16s\",\"t\":%6.2f,\"h\":%6.2f,\"hi\":%6.2f}", DEVIVE_ID, _temp, _humi, _hind);
   }
   // Send the request
   int responseCode = http.POST(payload);
