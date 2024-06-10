@@ -23,11 +23,11 @@ References:
 #define SERVER_SECRET "123456"
 #define SERVER_ENDPOINT "http://192.168.137.1:3000/api/v1/sensor0"
 
-#define STA_SSID "Wrioteatime"
-#define STA_PASS "chai-tea"
+#define STA_SSID "Wokwi-GUEST"
+#define STA_PASS ""
 
 #define DHTPIN 25
-#define DHTTYPE DHT11 
+#define DHTTYPE DHT22
 
 #define PSDA 33
 #define PSDL 32
@@ -114,24 +114,20 @@ void DisplayValues(){
   // Heat index levels
   if (_hind < 27){
     next_warn_level = 0;
-    Serial.printf("NORMAL");
   }
   if (_hind >= 27){
     next_warn_level = 1;
-    Serial.println("CAUTION");
   }
   if (_hind >= 32){
     next_warn_level = 2;
-    Serial.println("EXTRA_CAUTION");
   }
   if (_hind >=41){
     next_warn_level = 3;
-    Serial.println("DANGER");
   }
   if (_hind >= 54){
     next_warn_level = 4;
-    Serial.println("EXTREME_DANGER");
   }
+  Serial.println(next_warn_level);
   // If new warning level is same as previous one
   // no need to update the warnings, stablize outputs
   if (next_warn_level == current_warn_level){
