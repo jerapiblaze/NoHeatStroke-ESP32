@@ -15,8 +15,6 @@ References:
 */
 #include <WiFi.h>
 #include "DHT.h"
-#include <esp_sleep.h>
-#include "driver/adc.h"
 #include <Wire.h>
 #include <LCDI2C_Multilingual.h>
 #include <HTTPClient.h>
